@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">Heart Rate Monitor</string>
+    <string name="menu_blesettings">BLE Settings</string>
+    <string name="menu_appsettings">App Settings</string>
+    <string name="menu_run">RUN</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_scan">SCAN</string>
+    <string name="menu_stopscan">STOP</string>
+
+    <string name="pref_cat_01">Application Settings</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="error_bluetooth_not_supported">Bluetooth Adapter Not Found</string>
+
+    <string name="caption_current_device">Current Device</string>
+    <string name="caption_avail_devices">Available Devices</string>
+
 </resources>

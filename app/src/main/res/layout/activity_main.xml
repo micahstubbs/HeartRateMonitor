@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
+    <include
+        android:id="@+id/appbar_layout"
+        layout="@layout/app_bar_layout"></include>
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
