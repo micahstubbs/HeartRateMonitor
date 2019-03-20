@@ -7,9 +7,11 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.github.mikephil.charting.charts.LineChart;
+
 public class MainActivity extends AppCompatActivity {
 
-    boolean mConnected = false;
+    Charting cardio_chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +21,12 @@ public class MainActivity extends AppCompatActivity {
         //AppBar
         Toolbar myToolbar = findViewById(R.id.appbar_layout);
         setSupportActionBar(myToolbar);
-        getSupportActionBar().setTitle("BMP280 Altimeter");
+        getSupportActionBar().setTitle(R.string.app_name);
+
+        LineChart lCh = findViewById(R.id.cardio_chart);
+        cardio_chart = new Charting(lCh);
+
+        cardio_chart.setMaxViewPoints(2000);
     }
 
     @Override
