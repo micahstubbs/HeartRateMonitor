@@ -1,7 +1,7 @@
 package com.example.heartratemonitor;
 
 import android.graphics.Color;
-import android.view.View;
+
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -14,7 +14,13 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import java.util.ArrayList;
 
 
+
 public class Charting {
+
+    public enum ChartType{
+        ECG, HR
+    }
+    private ChartType chartType;
 
     private LineChart mChart;
     private LineData mData;
@@ -28,14 +34,72 @@ public class Charting {
     private int CHART_MAX_VIEW_POINTS = 1000;
 
 
-    public Charting(LineChart chart){
+    public Charting(LineChart chart, ChartType type){
         this.mChart = chart;
+        if (type == ChartType.ECG) {
+            createDataSet2();
+            this.chartType = type;
 
-        createDataSet();
-        mData = mChart.getData();
-        mDataSet1 = mData.getDataSetByIndex(0);
-        mDataSet2 = mData.getDataSetByIndex(1);
+            mData = mChart.getData();
+            mDataSet1 = mData.getDataSetByIndex(0);
+            mDataSet2 = mData.getDataSetByIndex(1);
+            leftAxis = mChart.getAxisLeft();
+        }
+        if (type == ChartType.HR){
+            createDataSet1();
+            this.chartType = type;
+            mData = mChart.getData();
+            mDataSet1 = mData.getDataSetByIndex(0);
+            leftAxis = mChart.getAxisLeft();
+        }
+
+    }
+
+    private void createDataSet1() {
+        ArrayList<Entry> yValues = new ArrayList<>();
+        LineDataSet set1 = new LineDataSet(yValues, "DataSet1");
+        set1.setColor(Color.RED);
+        set1.setLineWidth(2f);
+        set1.setDrawCircles(false);
+        set1.setDrawValues(false);
+
+        ArrayList<ILineDataSet> dataSets = new ArrayList<>();
+        dataSets.add(set1);
+
+        LineData data = new LineData(dataSets);
+
+        mChart.setData(data);
+
+        mChart.getDescription().setText("Heart Rate");
+
+        // get the legend (only possible after setting data)
+        Legend l = mChart.getLegend();
+
+        // modify the legend ...
+        l.setEnabled(false);
+        //l.setForm(Legend.LegendForm.LINE);
+        //l.setTextColor(Color.DKGRAY);
+
+        XAxis xl = mChart.getXAxis();
+        xl.setTextColor(Color.WHITE);
+        xl.setEnabled(false);
+
+
         leftAxis = mChart.getAxisLeft();
+        leftAxis.setTextColor(Color.LTGRAY);
+        leftAxis.setDrawGridLines(true);
+        autoScale(true);
+        //leftAxis.setAxisMaximum(256f);
+        //leftAxis.setAxisMinimum(-10f);
+        leftAxis.setDrawGridLines(true);
+
+        YAxis rightAxis = mChart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        mChart.getAxisLeft().setDrawGridLines(false);
+        mChart.getXAxis().setDrawGridLines(false);
+        mChart.setDrawBorders(false);
+
     }
 
 
@@ -49,34 +113,24 @@ public class Charting {
     }
 
     public void setMaxViewPoints(int maxPoints){
-
-        if ((maxPoints < 5000) & (maxPoints > 99)){
-            CHART_MAX_VIEW_POINTS = maxPoints;
-        } else {
-            CHART_MAX_VIEW_POINTS = 100;
-        }
-        XAxis xl = mChart.getXAxis();
-        xl.setAxisMaximum((float)CHART_MAX_VIEW_POINTS);
-        /*
-        if (mData != null){
-            int PointCount = mDataSet1.getEntryCount();
-            if (PointCount < CHART_MAX_VIEW_POINTS){
-                for (int i = 0; i<(CHART_MAX_VIEW_POINTS-PointCount); i++){
-                    mData.addEntry(new Entry(mDataSet1.getEntryCount(),0),0);
-                }
+        if (chartType == ChartType.ECG){
+            if ((maxPoints < 5000) & (maxPoints > 99)){
+                CHART_MAX_VIEW_POINTS = maxPoints;
             } else {
-                for (int i = 0; i<(PointCount - CHART_MAX_VIEW_POINTS); i++){
-                    mDataSet1.removeLast();
-                }
+                CHART_MAX_VIEW_POINTS = 100;
             }
-            mChart.getXAxis().setAxisMinimum(0f);
-            mChart.getXAxis().setAxisMaximum((float)CHART_MAX_VIEW_POINTS);
+            XAxis xl = mChart.getXAxis();
+            xl.setAxisMaximum((float)CHART_MAX_VIEW_POINTS);
         }
-*/
+        if (chartType == ChartType.HR){
+            CHART_MAX_VIEW_POINTS = maxPoints;
+            mChart.setVisibleXRange(0, CHART_MAX_VIEW_POINTS);
+        }
+
     }
 
 
-    private void createDataSet() {
+    private void createDataSet2() {
         ArrayList<Entry> yValues = new ArrayList<>();
         LineDataSet set1 = new LineDataSet(yValues, "DataSet1");
         set1.setColor(Color.RED);
@@ -99,7 +153,7 @@ public class Charting {
 
         mChart.setData(data);
 
-        mChart.getDescription().setText("fgwef");
+        mChart.getDescription().setText("ECG");
 
 
 
@@ -159,7 +213,28 @@ public class Charting {
     private int X1;
     private boolean toggler;
 
-    public void putDataChart(byte[] data){
+    public void drawChart(byte[] arraydata, int beats){
+        if (chartType == ChartType.ECG) putDataChart2(arraydata);
+        if (chartType == ChartType.HR) putDataChart1(beats);
+    }
+
+    // Для одного графика просто добавляем данные и отрисовываем
+    private void putDataChart1(int beats) {
+        mData.addEntry(new Entry(mDataSet1.getEntryCount(), beats),0);
+        mChart.notifyDataSetChanged();
+        mChart.setVisibleXRange(0, CHART_MAX_VIEW_POINTS);
+        mChart.moveViewToX(mDataSet1.getEntryCount());
+        //ILineDataSet set = mData.getDataSetByIndex(0);
+
+        //mData.addEntry(new Entry(set.getEntryCount(), beats),0);
+        //mChart.notifyDataSetChanged();
+        //mChart.setVisibleXRange(1,200);
+        //mChart.moveViewToX(set.getEntryCount());
+
+    }
+
+    // Для кардиограммы рисуем в 2 датасета
+    private void putDataChart2(byte[] data){
         if (data != null){
 /*
             //ползущий график
