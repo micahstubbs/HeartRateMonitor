@@ -1,5 +1,6 @@
 package com.example.heartratemonitor;
 
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -29,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String BT_NAME_KEY = "key_bt_name_preferences";
     private static final String BT_ADDR_KEY = "key_bt_addr_preferences";
 
+    private static final String HC08_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+    private static final String HC08_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
     Charting ecg_chart, hr_chart;
     Thread thr; //del
     private boolean mRun = false;
@@ -39,7 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private String mDeviceAddress;
     private boolean mConnected = false;
     private boolean mBound = false;
-
+    private BluetoothGattCharacteristic ourGattCharacteristic;
+    private BluetoothGattCharacteristic mNotifyCharacteristic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,16 +87,45 @@ public class MainActivity extends AppCompatActivity {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 connectToGATTCharacteristic(mBluetoothLeService.getSupportedGattServices());
-                Toast.makeText(getApplicationContext(), "BLE Services discovered", Toast.LENGTH_SHORT).show();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                //updateChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
+                updateChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
 
             }
         }
 
-        private void connectToGATTCharacteristic(List<BluetoothGattService> supportedGattServices) {
+        private void updateChart(Bundle b) {
+            byte[] receivedData = b.getByteArray("ReceivedData");
+            ecg_chart.drawChart(receivedData, 0);
+        }
 
+        private void connectToGATTCharacteristic(List<BluetoothGattService> supportedGattServices) {
+            // Loops through available GATT Services.
+            for (BluetoothGattService gattService : supportedGattServices) {
+                if (gattService.getUuid().toString().equals(HC08_SERVICE_UUID)){
+                    List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
+                    for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics){
+                        if (gattCharacteristic.getUuid().toString().equals(HC08_CHARACTERISTIC_UUID))
+                        {
+                            int charaProp = gattCharacteristic.getProperties();
+                            if ((charaProp & BluetoothGattCharacteristic.PROPERTY_READ) == BluetoothGattCharacteristic.PROPERTY_READ) {
+                                // If there is an active notification on a characteristic, clear
+                                // it first so it doesn't update the data field on the user interface.
+                                if (mNotifyCharacteristic != null) {
+                                    mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
+                                    mNotifyCharacteristic = null;
+                                }
+                                mBluetoothLeService.readCharacteristic(gattCharacteristic);
+                            }
+                            if ((charaProp & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == BluetoothGattCharacteristic.PROPERTY_NOTIFY) {
+                                mNotifyCharacteristic = gattCharacteristic;
+                                mBluetoothLeService.setCharacteristicNotification(gattCharacteristic, true);
+                            }
+                            mBluetoothLeService.readCharacteristic(gattCharacteristic);
+                        }
+                    }
+                }
+            }
         }
     };
 
@@ -105,13 +139,15 @@ public class MainActivity extends AppCompatActivity {
                 mDeviceName = sharedPreferences.getString(BT_NAME_KEY, "0");
                 mDeviceAddress = sharedPreferences.getString(BT_ADDR_KEY, "0");
             }else{
-                Toast.makeText(this, "Bluetooth device is not found.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Bluetooth device is not found. Please scan to find.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             getSupportActionBar().setTitle(mDeviceName);
-            gattServiceIntent = new Intent(this, com.example.heartratemonitor.BluetoothLeService.class);
-            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+            gattServiceIntent = new Intent(this, BluetoothLeService.class);
+            gattServiceIntent.putExtra("CompareLine_value", 140);
+            boolean bindservise = bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+            Log.d(TAG, "ServiceBinding=" + Boolean.toString(bindservise));
             registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
         }
 
@@ -139,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
             // Automatically connects to the device upon successful start-up initialization.
-            mBluetoothLeService.connect(mDeviceAddress);
+            //mBluetoothLeService.connect(mDeviceAddress);
             mBound = true;
             Log.d(TAG, "MainActivity onServiceConnected");
         }
@@ -175,7 +211,9 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.menu_run:
-                mBluetoothLeService.connect(mDeviceAddress);
+                if (mBluetoothLeService != null)
+                    mBluetoothLeService.connect(mDeviceAddress);
+                else Toast.makeText(this,"Service=null",Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.menu_stop:
                 mBluetoothLeService.disconnect();

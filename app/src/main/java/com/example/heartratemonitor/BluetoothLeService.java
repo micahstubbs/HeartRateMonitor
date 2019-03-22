@@ -48,7 +48,8 @@ public class BluetoothLeService extends Service {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
-
+    private int comp_value;
+    private static final String COMPARE_VALUE = "CompareLine_value";
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
@@ -177,6 +178,7 @@ public class BluetoothLeService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        comp_value = intent.getIntExtra(COMPARE_VALUE, 0);
         return mBinder;
     }
 
