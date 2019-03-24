@@ -54,6 +54,11 @@ public class BluetoothLeService extends Service {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
+    private int point_counter = 0;
+    private boolean b1_;
+    int point_amount, point_amount_;
+    private boolean resetFilter = true;
+
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
@@ -133,39 +138,46 @@ public class BluetoothLeService extends Service {
         sendBroadcast(intent);
     }
 
-    private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
+    private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
 
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
+        // For all other profiles, writes the data formatted in HEX.
+        final byte[] data = characteristic.getValue();
+        if (data != null && data.length > 0) {
+            Bundle bnd = new Bundle();
+            bnd.putByteArray("ReceivedData", data);
+            intent.putExtra(EXTRA_DATA2, bnd);
+
+            //передаем значение количества точек между срабатываниями (ударами пульса)
+            boolean b, b1;
+
+            for (byte byteChar : data) {
+                int anUnsignedByte = (0x000000FF & (int) byteChar);
+                if (anUnsignedByte > comp_value) b1 = true;
+                else b1 = false;
+                b = (b1 ^ b1_) & (!b1_);
+                b1_ = b1;
+                if(b){
+                    point_amount = point_counter;
+                    point_counter = 0;
+                    if (resetFilter)
+                    {
+                        point_amount_ = point_amount;
+                        resetFilter = false;
+                    }
+                }
+                point_counter++;
+                if (point_counter>1000)point_counter = 0;
             }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                Bundle bnd = new Bundle();
-                bnd.putByteArray("ReceivedData", data);
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                String s = new String(data) + "\n" + stringBuilder.toString();
-                intent.putExtra(EXTRA_DATA, s);// new String(data) + "\n" + stringBuilder.toString());
-                intent.putExtra(EXTRA_DATA2, bnd);
+            //фильтр
+            if (Math.abs(point_amount_-point_amount) > 20){
+                point_amount = point_amount_;
+                resetFilter = true;
             }
+
+            if ((point_amount > 900) || (point_amount < 140))point_amount = point_amount_;
+            point_amount_ = point_amount;
+            intent.putExtra(EXTRA_DATA, point_amount);
         }
         sendBroadcast(intent);
     }

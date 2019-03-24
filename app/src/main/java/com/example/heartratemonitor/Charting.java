@@ -213,13 +213,14 @@ public class Charting {
     private int X1;
     private boolean toggler;
 
-    public void drawChart(byte[] arraydata, int beats){
+    public void drawChart(byte[] arraydata, float beats){
         if (chartType == ChartType.ECG) putDataChart2(arraydata);
         if (chartType == ChartType.HR) putDataChart1(beats);
     }
 
     // Для одного графика просто добавляем данные и отрисовываем
-    private void putDataChart1(int beats) {
+    private void putDataChart1(float beats) {
+        if (beats == Float.POSITIVE_INFINITY)beats=0;
         mData.addEntry(new Entry(mDataSet1.getEntryCount(), beats),0);
         mChart.notifyDataSetChanged();
         mChart.setVisibleXRange(0, CHART_MAX_VIEW_POINTS);

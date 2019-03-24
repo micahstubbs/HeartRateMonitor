@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothGattCharacteristic ourGattCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
+    private TextView textView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +65,9 @@ public class MainActivity extends AppCompatActivity {
         ecg_chart.setMaxViewPoints(2000);
 
         hr_chart = new Charting(lCh1, Charting.ChartType.HR);//Heart Rate chart
-        hr_chart.setMaxViewPoints(150);
+        hr_chart.setMaxViewPoints(700);
 
+        textView = findViewById(R.id.bpm);
 
     }
 
@@ -88,13 +92,20 @@ public class MainActivity extends AppCompatActivity {
                 // Show all the supported services and characteristics on the user interface.
                 connectToGATTCharacteristic(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                updateChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
+                displayData(intent.getIntExtra(BluetoothLeService.EXTRA_DATA, 0));
+                updateCardioChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
+
 
             }
         }
 
-        private void updateChart(Bundle b) {
+        private void displayData(int point_count) {
+            float bpm = (500 / (float)point_count) * 60;
+            textView.setText(String.format("%.1f", bpm));
+            hr_chart.drawChart(null, bpm);
+        }
+
+        private void updateCardioChart(Bundle b) {
             byte[] receivedData = b.getByteArray("ReceivedData");
             ecg_chart.drawChart(receivedData, 0);
         }
