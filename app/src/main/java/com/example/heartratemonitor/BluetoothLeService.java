@@ -147,7 +147,7 @@ public class BluetoothLeService extends Service {
             Bundle bnd = new Bundle();
             bnd.putByteArray("ReceivedData", data);
             intent.putExtra(EXTRA_DATA2, bnd);
-
+            intent.putExtra(EXTRA_DATA, -1);
             //передаем значение количества точек между срабатываниями (ударами пульса)
             boolean b, b1;
 
@@ -165,19 +165,22 @@ public class BluetoothLeService extends Service {
                         point_amount_ = point_amount;
                         resetFilter = false;
                     }
+
+                    //фильтр
+                    if (Math.abs(point_amount_-point_amount) > 20){
+                        point_amount = point_amount_;
+                        resetFilter = true;
+                    }
+
+                    if ((point_amount > 900) || (point_amount < 140))point_amount = point_amount_;
+                    point_amount_ = point_amount;
+                    intent.putExtra(EXTRA_DATA, point_amount);
+
                 }
                 point_counter++;
                 if (point_counter>1000)point_counter = 0;
             }
-            //фильтр
-            if (Math.abs(point_amount_-point_amount) > 20){
-                point_amount = point_amount_;
-                resetFilter = true;
-            }
 
-            if ((point_amount > 900) || (point_amount < 140))point_amount = point_amount_;
-            point_amount_ = point_amount;
-            intent.putExtra(EXTRA_DATA, point_amount);
         }
         sendBroadcast(intent);
     }

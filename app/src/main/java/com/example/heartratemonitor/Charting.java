@@ -77,8 +77,6 @@ public class Charting {
 
         // modify the legend ...
         l.setEnabled(false);
-        //l.setForm(Legend.LegendForm.LINE);
-        //l.setTextColor(Color.DKGRAY);
 
         XAxis xl = mChart.getXAxis();
         xl.setTextColor(Color.WHITE);
@@ -88,9 +86,6 @@ public class Charting {
         leftAxis = mChart.getAxisLeft();
         leftAxis.setTextColor(Color.LTGRAY);
         leftAxis.setDrawGridLines(true);
-        autoScale(true);
-        //leftAxis.setAxisMaximum(256f);
-        //leftAxis.setAxisMinimum(-10f);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
@@ -98,7 +93,7 @@ public class Charting {
 
         mChart.getAxisLeft().setDrawGridLines(false);
         mChart.getXAxis().setDrawGridLines(false);
-        mChart.setDrawBorders(false);
+        mChart.setDrawBorders(true);
 
     }
 

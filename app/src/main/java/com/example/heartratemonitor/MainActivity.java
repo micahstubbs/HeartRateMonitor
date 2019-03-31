@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         ecg_chart.setMaxViewPoints(2000);
 
         hr_chart = new Charting(lCh1, Charting.ChartType.HR);//Heart Rate chart
-        hr_chart.setMaxViewPoints(700);
+        hr_chart.setMaxViewPoints(100);
 
         textView = findViewById(R.id.bpm);
 
@@ -100,9 +100,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void displayData(int point_count) {
-            float bpm = (500 / (float)point_count) * 60;
-            textView.setText(String.format("%.1f", bpm));
-            hr_chart.drawChart(null, bpm);
+            if (point_count == -1)return;
+            else {
+                float bpm = (500 / (float) point_count) * 60;
+                textView.setText(String.format("%.1f", bpm));
+                hr_chart.drawChart(null, bpm);
+            }
         }
 
         private void updateCardioChart(Bundle b) {
