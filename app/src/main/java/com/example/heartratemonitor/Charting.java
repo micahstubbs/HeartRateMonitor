@@ -98,14 +98,6 @@ public class Charting {
     }
 
 
-    //return amount of Entry points in dataset at index "index"
-    public int getEntryCount(int index){
-        return mChart.getData().getDataSetByIndex(index).getEntryCount();
-    }
-
-    public int getChartMaxViewPoints(){
-        return CHART_MAX_VIEW_POINTS;
-    }
 
     public void setMaxViewPoints(int maxPoints){
         if (chartType == ChartType.ECG){
@@ -285,14 +277,15 @@ public class Charting {
         }
     }
 
-    public void removePoints(int pointCount) {
-
-        for (int xv = 0; xv<pointCount; xv++) {
-            mDataSet1.removeFirst();
+    public void clear(){
+        if (chartType == ChartType.HR){
+            mChart.clear();
+            mChart.invalidate();
+            createDataSet1();
+            mData = mChart.getData();
+            mDataSet1 = mData.getDataSetByIndex(0);
+            leftAxis = mChart.getAxisLeft();
         }
-        mData.notifyDataChanged();
-        mChart.notifyDataSetChanged();
-        mChart.invalidate();
-
     }
+
 }

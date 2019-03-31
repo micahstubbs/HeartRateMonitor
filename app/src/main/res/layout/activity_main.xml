@@ -49,6 +49,17 @@
             android:background="@color/divider"
             app:layout_constraintTop_toBottomOf="@+id/bt_addr" />
 
+        <Button
+            android:id="@+id/clearchart_button"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/appbar_layout"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="20dp"
+            android:text="Clear Chart" />
+
     </RelativeLayout>
 
     <LinearLayout
