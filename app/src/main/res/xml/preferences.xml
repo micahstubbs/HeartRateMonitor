@@ -2,6 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="@string/pref_cat_01">
+
+        <CheckBoxPreference
+            android:key="key_screenon_preferences"
+            android:title="@string/pref_checkbox_screenon_title"
+            android:summary="@string/pref_checkbox_screenon__summary"
+            android:defaultValue="true"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -77,8 +77,6 @@ public class Charting {
 
         // modify the legend ...
         l.setEnabled(false);
-        //l.setForm(Legend.LegendForm.LINE);
-        //l.setTextColor(Color.DKGRAY);
 
         XAxis xl = mChart.getXAxis();
         xl.setTextColor(Color.WHITE);
@@ -88,9 +86,6 @@ public class Charting {
         leftAxis = mChart.getAxisLeft();
         leftAxis.setTextColor(Color.LTGRAY);
         leftAxis.setDrawGridLines(true);
-        autoScale(true);
-        //leftAxis.setAxisMaximum(256f);
-        //leftAxis.setAxisMinimum(-10f);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
@@ -98,19 +93,11 @@ public class Charting {
 
         mChart.getAxisLeft().setDrawGridLines(false);
         mChart.getXAxis().setDrawGridLines(false);
-        mChart.setDrawBorders(false);
+        mChart.setDrawBorders(true);
 
     }
 
 
-    //return amount of Entry points in dataset at index "index"
-    public int getEntryCount(int index){
-        return mChart.getData().getDataSetByIndex(index).getEntryCount();
-    }
-
-    public int getChartMaxViewPoints(){
-        return CHART_MAX_VIEW_POINTS;
-    }
 
     public void setMaxViewPoints(int maxPoints){
         if (chartType == ChartType.ECG){
@@ -213,13 +200,14 @@ public class Charting {
     private int X1;
     private boolean toggler;
 
-    public void drawChart(byte[] arraydata, int beats){
+    public void drawChart(byte[] arraydata, float beats){
         if (chartType == ChartType.ECG) putDataChart2(arraydata);
         if (chartType == ChartType.HR) putDataChart1(beats);
     }
 
     // Для одного графика просто добавляем данные и отрисовываем
-    private void putDataChart1(int beats) {
+    private void putDataChart1(float beats) {
+        if (beats == Float.POSITIVE_INFINITY)beats=0;
         mData.addEntry(new Entry(mDataSet1.getEntryCount(), beats),0);
         mChart.notifyDataSetChanged();
         mChart.setVisibleXRange(0, CHART_MAX_VIEW_POINTS);
@@ -289,14 +277,15 @@ public class Charting {
         }
     }
 
-    public void removePoints(int pointCount) {
-
-        for (int xv = 0; xv<pointCount; xv++) {
-            mDataSet1.removeFirst();
+    public void clear(){
+        if (chartType == ChartType.HR){
+            mChart.clear();
+            mChart.invalidate();
+            createDataSet1();
+            mData = mChart.getData();
+            mDataSet1 = mData.getDataSetByIndex(0);
+            leftAxis = mChart.getAxisLeft();
         }
-        mData.notifyDataChanged();
-        mChart.notifyDataSetChanged();
-        mChart.invalidate();
-
     }
+
 }

@@ -1,15 +1,23 @@
 package com.example.heartratemonitor;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -17,6 +25,10 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -33,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String HC08_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
     private static final String HC08_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
+    private static final String CHECKBOX_SCR_ON_KEY = "key_screenon_preferences";
+
     Charting ecg_chart, hr_chart;
     Thread thr; //del
     private boolean mRun = false;
@@ -46,10 +60,48 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothGattCharacteristic ourGattCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
+    private TextView textView;
+    private Button btn;
+
+    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Для версий андроида больше 6, система требует предоставления разрешений в рантайме, а не при установке,
+        // как это было ранее.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {// Android M Permission check 
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                // Permission is not granted
+                // Should we show an explanation?
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                    // Show an explanation to the user *asynchronously* -- don't block
+                    // this thread waiting for the user's response! After the user
+                    // sees the explanation, try again to request the permission.
+                } else {
+                    // No explanation needed; request the permission
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+
+                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                    // app-defined int constant. The callback method gets the
+                    // result of the request.
+                }
+            } else {
+                // Permission has already been granted
+                if (savedInstanceState != null){
+                    return;
+                }
+
+            }
+        } else {
+
+            if (savedInstanceState != null){
+                return;
+            } // Для андроид 5 и ниже
+        }
 
         //AppBar
         Toolbar myToolbar = findViewById(R.id.appbar_layout);
@@ -62,7 +114,36 @@ public class MainActivity extends AppCompatActivity {
         ecg_chart.setMaxViewPoints(2000);
 
         hr_chart = new Charting(lCh1, Charting.ChartType.HR);//Heart Rate chart
-        hr_chart.setMaxViewPoints(150);
+        hr_chart.setMaxViewPoints(100);
+
+        textView = findViewById(R.id.bpm);
+        btn = findViewById(R.id.clearchart_button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Clear Heart Rate Chart")
+                        .setMessage("Are you sure you want to clear heart rate chart?")
+
+                        // Specifying a listener allows you to take an action before dismissing the dialog.
+                        // The dialog is automatically dismissed when a dialog button is clicked.
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Continue with delete operation
+                                hr_chart.clear();
+                            }
+                        })
+
+                        // A null listener allows the button to dismiss the dialog and take no further action.
+                        .setNegativeButton(android.R.string.no, null)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+
+
+            }
+        });
+
 
 
     }
@@ -88,13 +169,23 @@ public class MainActivity extends AppCompatActivity {
                 // Show all the supported services and characteristics on the user interface.
                 connectToGATTCharacteristic(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                updateChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
+                displayData(intent.getIntExtra(BluetoothLeService.EXTRA_DATA, 0));
+                updateCardioChart(intent.getBundleExtra(BluetoothLeService.EXTRA_DATA2));
+
 
             }
         }
 
-        private void updateChart(Bundle b) {
+        private void displayData(int point_count) {
+            if (point_count == -1)return;
+            else {
+                float bpm = (500 / (float) point_count) * 60;
+                textView.setText(String.format("%.1f", bpm));
+                hr_chart.drawChart(null, bpm);
+            }
+        }
+
+        private void updateCardioChart(Bundle b) {
             byte[] receivedData = b.getByteArray("ReceivedData");
             ecg_chart.drawChart(receivedData, 0);
         }
@@ -203,6 +294,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         switch (item.getItemId()){
             case R.id.menu_ble_settings:
                 startActivity(new Intent(this, BLESettingsActivity.class));
@@ -211,12 +303,16 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.menu_run:
-                if (mBluetoothLeService != null)
+                if (mBluetoothLeService != null){
                     mBluetoothLeService.connect(mDeviceAddress);
-                else Toast.makeText(this,"Service=null",Toast.LENGTH_SHORT).show();
+                    if (sharedPreferences.getBoolean(CHECKBOX_SCR_ON_KEY, false))
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+                else Toast.makeText(this,"No BT Device. mBluetoothLeService = null",Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.menu_stop:
                 mBluetoothLeService.disconnect();
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 return true;
         }
         return super.onOptionsItemSelected(item);
