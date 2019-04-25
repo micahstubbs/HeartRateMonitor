@@ -160,20 +160,29 @@ public class BluetoothLeService extends Service {
                 if(b){
                     point_amount = point_counter;
                     point_counter = 0;
+                    Log.d(TAG, "Initial count "+String.valueOf(point_amount));
+
+                    if ((point_amount > 900) || (point_amount < 150))
+                    {
+                        Log.d(TAG, "MoreLess condition: point_amount=" + String.valueOf(point_amount)+"  "+" point_amount_="+String.valueOf(point_amount_));
+                        point_amount = point_amount_;
+                    }
                     if (resetFilter)
                     {
+                        Log.d(TAG, "resetFilter condition: point_amount="+String.valueOf(point_amount)+" point_amount_="+String.valueOf(point_amount_));
                         point_amount_ = point_amount;
                         resetFilter = false;
                     }
-
                     //фильтр
-                    if (Math.abs(point_amount_-point_amount) > 20){
+                    if (Math.abs(point_amount_-point_amount) > 100){
+                        Log.d(TAG, "Math condition: point_amount="+String.valueOf(point_amount)+" point_amount_="+String.valueOf(point_amount_));
                         point_amount = point_amount_;
                         resetFilter = true;
                     }
 
-                    if ((point_amount > 900) || (point_amount < 140))point_amount = point_amount_;
+
                     point_amount_ = point_amount;
+                    Log.d(TAG, "Final count "+String.valueOf(point_amount));
                     intent.putExtra(EXTRA_DATA, point_amount);
 
                 }
