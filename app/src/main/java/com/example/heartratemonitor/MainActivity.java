@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -20,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String HC08_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
     private static final String HC08_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
+    private static final String CHECKBOX_SCR_ON_KEY = "key_screenon_preferences";
+
     Charting ecg_chart, hr_chart;
     Thread thr; //del
     private boolean mRun = false;
@@ -53,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView textView;
     private Button btn;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -248,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         switch (item.getItemId()){
             case R.id.menu_ble_settings:
                 startActivity(new Intent(this, BLESettingsActivity.class));
@@ -256,12 +262,16 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.menu_run:
-                if (mBluetoothLeService != null)
+                if (mBluetoothLeService != null){
                     mBluetoothLeService.connect(mDeviceAddress);
-                else Toast.makeText(this,"Service=null",Toast.LENGTH_SHORT).show();
+                    if (sharedPreferences.getBoolean(CHECKBOX_SCR_ON_KEY, false))
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+                else Toast.makeText(this,"No BT Device. mBluetoothLeService = null",Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.menu_stop:
                 mBluetoothLeService.disconnect();
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 return true;
         }
         return super.onOptionsItemSelected(item);
