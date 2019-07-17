@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Для версий андроида больше 6, система требует предоставления разрешений в рантайме, а не при установке,
         // как это было ранее.
+        // For versions of android greater than 6, the system requires permissions at runtime,
+        // rather than during installation, as it was before.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {// Android M Permission check 
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -100,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (savedInstanceState != null){
                 return;
-            } // Для андроид 5 и ниже
+            } // Для андроид 5 и ниже // for android 5 and below
         }
 
         //AppBar
@@ -319,6 +321,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Поток для непрерывного отображения данных
+    // Stream for continuous data mapping
     private void showChartData() {
         thr = new Thread(){
             public void run() {

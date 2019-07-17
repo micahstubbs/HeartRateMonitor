@@ -130,6 +130,7 @@ public class Charting {
         set2.setDrawCircles(false);
         set2.setDrawValues(false);
         // сглаживание
+        // anti-aliasing
         //set1.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         //set1.setCubicIntensity(0.2f);
 
@@ -141,9 +142,6 @@ public class Charting {
         mChart.setData(data);
 
         mChart.getDescription().setText("ECG");
-
-
-
 
         // get the legend (only possible after setting data)
         Legend l = mChart.getLegend();
@@ -206,6 +204,7 @@ public class Charting {
     }
 
     // Для одного графика просто добавляем данные и отрисовываем
+    // For one graphic, simply add the data and draw
     private void putDataChart1(float beats) {
         if (beats == Float.POSITIVE_INFINITY)beats=0;
         mData.addEntry(new Entry(mDataSet1.getEntryCount(), beats),0);
@@ -222,10 +221,12 @@ public class Charting {
     }
 
     // Для кардиограммы рисуем в 2 датасета
+    // For the cardiogram we draw in 2 datasets
     private void putDataChart2(byte[] data){
         if (data != null){
 /*
             //ползущий график
+            // crawling chart
             for (byte xValue : data)
             {
                 int anUnsignedByte = (0x000000FF & (int)xValue);
@@ -240,6 +241,7 @@ public class Charting {
 
 *//*
             //рисует график в один датасет, слева на право постоянно
+            // draws a graph in one dataset, from left to right constantly
             for (byte xValue : data)
             {
                 X1++;
@@ -251,6 +253,7 @@ public class Charting {
 
 */
             // в 2 датасета, слева на право
+            // in 2, from left to right
             for (byte xValue : data)
             {
 
