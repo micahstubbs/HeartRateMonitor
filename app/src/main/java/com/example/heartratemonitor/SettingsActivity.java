@@ -22,11 +22,13 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         // костыль для кнопки назад
+        // crutch for back button
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     // костыль для кнопки назад
+    // crutch for back button
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId())

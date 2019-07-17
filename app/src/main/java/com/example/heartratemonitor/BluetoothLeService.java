@@ -149,6 +149,7 @@ public class BluetoothLeService extends Service {
             intent.putExtra(EXTRA_DATA2, bnd);
             intent.putExtra(EXTRA_DATA, -1);
             //передаем значение количества точек между срабатываниями (ударами пульса)
+            // transfer the value of the number of points between the triggers (beats of the pulse)
             boolean b, b1;
 
             for (byte byteChar : data) {

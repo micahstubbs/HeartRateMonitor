@@ -90,6 +90,7 @@ public class BLESettingsActivity extends AppCompatActivity {
         mHandler = new Handler();
 
         //Обработка нажатия на лист
+        // Handle clicking on the sheet
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
